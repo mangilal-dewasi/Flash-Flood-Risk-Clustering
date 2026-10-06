@@ -1,5 +1,8 @@
 data/interim/imd_rainfall_2019_2024_combined.nc
 test.py 
+# External geospatial source datasets
+data/hydrobasins/
+data/state_nwic_shp/
 
 # Raw environmental datasets
 data/raw/
