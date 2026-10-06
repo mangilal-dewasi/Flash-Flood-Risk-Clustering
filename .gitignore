@@ -1,1 +1,20 @@
 data/interim/imd_rainfall_2019_2024_combined.nc
+test.py 
+
+# Raw environmental datasets
+data/raw/
+data/*.nc
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
+
