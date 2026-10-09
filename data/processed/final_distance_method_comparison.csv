@@ -1,0 +1,5 @@
+k,method,distance,objective_name,objective_value,silhouette_matching_distance,davies_bouldin_euclidean_diagnostic,calinski_harabasz_euclidean_diagnostic,smallest_cluster_size,largest_cluster_size
+5,K-Means,Euclidean,within-cluster sum of squared Euclidean distances (inertia),337.1791,0.3257,1.027,54.4374,9,41
+5,K-Medoids (PAM-style),Manhattan,sum of Manhattan distances to assigned medoids,462.3608,0.3035,1.051,51.3053,10,42
+6,K-Means,Euclidean,within-cluster sum of squared Euclidean distances (inertia),288.6275,0.3235,1.0275,54.0045,7,34
+6,K-Medoids (PAM-style),Manhattan,sum of Manhattan distances to assigned medoids,426.5424,0.2938,1.1417,48.8604,8,31
