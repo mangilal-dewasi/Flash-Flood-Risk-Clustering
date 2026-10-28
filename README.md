@@ -4,9 +4,8 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/) [![Streamlit](https://img.shields.io/badge/Dashboard-Streamlit-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/) [![Method](https://img.shields.io/badge/Method-Unsupervised%20Learning-0F766E)](#methodology)
 
-**Repository:** [mangilal-dewasi/Flash-Flood-Risk-Clustering](https://github.com/mangilal-dewasi/Flash-Flood-Risk-Clustering)
 
-**INT396 · Unsupervised Learning Research Project**  
+**Unsupervised Learning Research Project**  
 **Study region:** Himachal Pradesh and Uttarakhand, India  
 **Study period:** 2019–2024
 
