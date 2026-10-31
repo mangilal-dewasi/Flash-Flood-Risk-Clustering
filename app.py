@@ -8,11 +8,59 @@ import plotly.graph_objects as go
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 
+st.markdown(
+    """
+    <style>
+    [data-testid="stToolbar"] {
+        display: none !important;
+    }
+
+    [data-testid="stStatusWidget"] {
+        display: none !important;
+    }
+
+    header[data-testid="stHeader"] {
+    display: none !important;
+    }
+    
+    .stAppDeployButton {
+        display: none !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 ROOT = Path(__file__).resolve().parent
 DATA = ROOT / 'data' / 'processed'
 FIGURES = ROOT / 'reports' / 'figures'
 
 st.set_page_config(page_title='Flash-Flood Pattern Atlas', page_icon='🌧️', layout='wide', initial_sidebar_state='expanded')
+
+st.markdown("""
+<style>
+[data-testid="stSidebar"] {
+    min-width: 275px !important;
+    max-width: 275px !important;
+    width: 275px !important;
+}
+
+[data-testid="stSidebarCollapseButton"],
+[data-testid="stSidebarCollapsedControl"] {
+    display: none !important;
+}
+
+[data-testid="stSidebar"] > div:first-child {
+    width: 275px !important;
+}
+
+/* Give the main dashboard more breathing room */
+.block-container {
+    padding-top: 1.5rem;
+    max-width: 100%;
+}
+</style>
+""", unsafe_allow_html=True)
 
 # Premium research-dashboard styling: dark glass, restrained alpine teal, editorial typography.
 st.markdown("""<style>
@@ -90,7 +138,7 @@ def pca_data(dataset):
     out = pd.DataFrame({'catchment_id': dataset['catchment_id'].astype(str), 'PC1': coords[:, 0], 'PC2': coords[:, 1]})
     return out, pca.explained_variance_ratio_, pca.components_, features
 
-st.markdown("""<section class='atlas-hero'><div class='atlas-eyebrow'>INT396 · UNSUPERVISED LEARNING RESEARCH</div><div class='atlas-pill'>Himalayan catchment intelligence</div><h1 class='atlas-title'>Flash-Flood Pattern Atlas</h1><p class='atlas-subtitle'>An exploratory research interface for discovering rainfall–terrain patterns across hilly catchments in Himachal Pradesh and Uttarakhand. Built on IMD rainfall, SRTM-derived terrain features and HydroBASINS catchments.</p></section>""", unsafe_allow_html=True)
+st.markdown("""<section class='atlas-hero'><div class='atlas-pill'>Himalayan catchment intelligence</div><h1 class='atlas-title'>Flash-Flood Pattern CLustering</h1><p class='atlas-subtitle'>An exploratory research interface for discovering rainfall–terrain patterns across hilly catchments in Himachal Pradesh and Uttarakhand. Built on IMD rainfall, SRTM-derived terrain features and HydroBASINS catchments.</p><div class='atlas-eyebrow'>Deisgned and Developed by Mangilal Dewasi</div></section>""", unsafe_allow_html=True)
 st.warning('Research boundary · These clusters describe exploratory rainfall–terrain patterns. They are not validated flood-risk classes or flood-probability estimates; independent observed flood outcomes were not used.')
 
 # Load the core data and handle missing optional analysis outputs gracefully.
@@ -105,12 +153,45 @@ if dataset is None:
 
 dataset['catchment_id'] = dataset['catchment_id'].astype(str)
 
+k_choice = 6
+
 with st.sidebar:
     st.header('Explore the analysis')
-    k_choice = st.selectbox('K-Means cluster solution', [5, 6], index=1, help='K=6 is the current leading candidate; K=5 is retained as the simpler alternative.')
-    view = st.radio('Dashboard section', ['Overview', 'Catchment map', 'Cluster profiles', 'PCA explorer', 'Validation & methods', 'Dataset explorer'])
+
+    st.markdown("""
+    <div style="
+        background: rgba(124,224,210,0.08);
+        border: 1px solid rgba(124,224,210,0.25);
+        border-radius: 12px;
+        padding: 12px;
+        margin-bottom: 15px;
+    ">
+        <div style="font-size: 11px; color: #7ce0d2;">
+            6 Clusters
+        </div>
+        <div style="font-size: 23px; font-weight: 700; color: white;">
+            K-Means · K = 6
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    view = st.radio(
+        'Dashboard section',
+        [
+            'Overview',
+            'Catchment map',
+            'Cluster profiles',
+            'PCA explorer',
+            'Validation & methods',
+            'Dataset explorer'
+        ]
+    )
+
     st.divider()
-    st.caption('Data: IMD daily rainfall (2019–2024), SRTM-derived terrain features, HydroBASINS L8 catchments.')
+    st.caption(
+        'Data: IMD daily rainfall (2019–2024), '
+        'SRTM-derived terrain features, HydroBASINS L8 catchments.'
+    )
 
 assign_file = f'final_k{k_choice}_assignments.csv'
 profiles_file = f'final_k{k_choice}_profiles_original_units.csv'
@@ -260,4 +341,3 @@ elif view == 'Dataset explorer':
     st.plotly_chart(fig, use_container_width=True)
 
 st.divider()
-st.caption('Flash-Flood Pattern Atlas • Exploratory unsupervised learning • Document sources, preprocessing decisions, exclusions, uncertainty and limitations in the final report.')
