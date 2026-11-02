@@ -1,4 +1,4 @@
-# 🌧️ Flash-Flood Pattern Atlas
+# 🌧️ Flash-Flood Pattern Clustering
 
 ### Exploratory clustering of rainfall–terrain patterns across Himalayan catchments
 
@@ -9,9 +9,9 @@
 **Rainfall period:** 2019–2024  
 **Current analysis table:** 113 catchments × 9 selected features
 
-The **Flash-Flood Pattern Atlas** is an exploratory research and visualization project. It combines IMD daily gridded rainfall, terrain characteristics derived from SRTM elevation data, and HydroBASINS Level 8 catchment boundaries. Unsupervised-learning methods group catchments with similar rainfall–terrain profiles and support inspection of those patterns spatially.
+The **Flash-Flood Pattern Clustering** is an exploratory research and visualization project. It combines IMD daily gridded rainfall, terrain characteristics derived from SRTM elevation data, and HydroBASINS Level 8 catchment boundaries. Unsupervised-learning methods group catchments with similar rainfall–terrain profiles and support inspection of those patterns spatially.
 
-> **Research boundary:** These are exploratory rainfall–terrain pattern groups—not validated flood-risk classes, flood forecasts, or estimates of flood probability. Independent observed flood-event labels were not used to train or validate the clusters. Do not use this project for emergency, warning, or site-specific safety decisions.
+> **Research Boundary:** These are exploratory rainfall–terrain pattern groups—not validated flood-risk classes, flood forecasts, or estimates of flood probability. Independent observed flood-event labels were not used to train or validate the clusters. Do not use this project for emergency, warning, or site-specific safety decisions.
 
 ---
 
