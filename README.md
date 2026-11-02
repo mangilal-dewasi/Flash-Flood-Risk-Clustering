@@ -7,8 +7,10 @@
 **Unsupervised Learning Research Project**  
 **Study region:** Himachal Pradesh and Uttarakhand, India  
 **Rainfall period:** 2019–2024  
-**Current analysis table:** 113 catchments × 9 selected features
+**Current analysis table:** 113 catchments × 9 selected features\
+
 **Explore the deployed application here:**
+
 👉 [Flash-Flood Pattern Clustering — Live Dashboard](https://flash-flood-risk-clustering.streamlit.app/)
 
 The **Flash-Flood Pattern Clustering** is an exploratory research and visualization project. It combines IMD daily gridded rainfall, terrain characteristics derived from SRTM elevation data, and HydroBASINS Level 8 catchment boundaries. Unsupervised-learning methods group catchments with similar rainfall–terrain profiles and support inspection of those patterns spatially.
