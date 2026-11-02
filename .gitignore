@@ -1,5 +1,4 @@
 data/interim/imd_rainfall_2019_2024_combined.nc
-test.py 
 # External geospatial source datasets
 data/hydrobasins/
 data/state_nwic_shp/
@@ -21,6 +20,4 @@ venv/
 .DS_Store
 Thumbs.db
 
-#text
-reports/final_analysis_report.txt 
-
+reports/

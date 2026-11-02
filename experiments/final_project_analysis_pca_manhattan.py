@@ -8,18 +8,19 @@ Required input: data/processed/clustering_dataset.csv
 Optional input: data/processed/modeling_dataset.csv
 
 Outputs: reports/final_analysis_report.txt, CSV summaries in data/processed/,
-and three figures in reports/figures/. No follow-up analysis script is needed.
+and figures in reports/figures/. No follow-up analysis script is needed.
 Requires pandas, numpy, scikit-learn, matplotlib.
 """
 from pathlib import Path
 import warnings
 import numpy as np
 import pandas as pd
-from sklearn.cluster import KMeans, AgglomerativeClustering
+from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
 from sklearn.metrics import (
     silhouette_score, silhouette_samples, davies_bouldin_score,
-    calinski_harabasz_score, adjusted_rand_score
+    calinski_harabasz_score, adjusted_rand_score, pairwise_distances
 )
 warnings.filterwarnings("ignore", category=FutureWarning)
 
@@ -37,6 +38,58 @@ def find_id(df):
             return col
     return None
 
+
+def pam_kmedoids_manhattan(X, n_clusters, max_iter=100):
+    """Small-data PAM-style K-Medoids using Manhattan distances.
+
+    Greedy BUILD initialization followed by best-improving single medoid swaps.
+    Returns integer labels, medoid row indices, and total Manhattan-distance cost.
+    Suitable for this project dataset (about 113 catchments), not very large data.
+    """
+    D = pairwise_distances(X, metric="manhattan")
+    n = D.shape[0]
+    if not 2 <= n_clusters < n:
+        raise ValueError("n_clusters must be between 2 and n_samples - 1")
+
+    # BUILD: choose the first medoid minimizing total distance, then greedily add.
+    first = int(np.argmin(D.sum(axis=1)))
+    medoids = [first]
+    nearest = D[:, first].copy()
+    while len(medoids) < n_clusters:
+        best_candidate, best_cost = None, np.inf
+        for candidate in range(n):
+            if candidate in medoids:
+                continue
+            cost = np.minimum(nearest, D[:, candidate]).sum()
+            if cost < best_cost:
+                best_candidate, best_cost = candidate, cost
+        medoids.append(int(best_candidate))
+        nearest = np.minimum(nearest, D[:, best_candidate])
+
+    medoids = np.array(medoids, dtype=int)
+    current_cost = D[:, medoids].min(axis=1).sum()
+    for _ in range(max_iter):
+        best_swap, best_cost = None, current_cost
+        medoid_set = set(medoids.tolist())
+        for old in medoids:
+            for candidate in range(n):
+                if candidate in medoid_set:
+                    continue
+                trial = medoids.copy()
+                trial[np.where(trial == old)[0][0]] = candidate
+                cost = D[:, trial].min(axis=1).sum()
+                if cost < best_cost - 1e-10:
+                    best_cost = cost
+                    best_swap = (int(old), int(candidate))
+        if best_swap is None:
+            break
+        old, new = best_swap
+        medoids[np.where(medoids == old)[0][0]] = new
+        current_cost = best_cost
+
+    distances_to_medoids = D[:, medoids]
+    labels = distances_to_medoids.argmin(axis=1)
+    return labels, medoids, float(distances_to_medoids.min(axis=1).sum())
 
 def main():
     DATA.mkdir(parents=True, exist_ok=True)
@@ -240,50 +293,75 @@ def main():
     else:
         log("\nOptional modeling_dataset.csv absent; skipped all-feature sensitivity check.")
 
-    # Hierarchical comparison on the same standardised features and catchments.
-    # Ward linkage is valid only with Euclidean distance; average linkage supports
-    # Euclidean and Manhattan distances.
-    hier_rows = []
-    hier_assignments = []
-    kmeans_reference = {}
-    for k in [4, 5, 6]:
-        km_labels = KMeans(n_clusters=k, random_state=42, n_init=20).fit_predict(X)
-        kmeans_reference[k] = km_labels
-        methods = [
-            ("Agglomerative Ward", "euclidean", "ward"),
-            ("Agglomerative Average", "euclidean", "average"),
-            ("Agglomerative Average", "manhattan", "average"),
-        ]
-        for method_name, metric, linkage in methods:
-            model = AgglomerativeClustering(n_clusters=k, linkage=linkage, metric=metric)
-            labels = model.fit_predict(X)
-            sizes = pd.Series(labels).value_counts().sort_index()
-            sil = float(silhouette_score(X, labels, metric=metric))
-            db = float(davies_bouldin_score(X, labels))
-            ch = float(calinski_harabasz_score(X, labels))
-            ari = float(adjusted_rand_score(km_labels, labels))
-            hier_rows.append({
-                "k": k, "method": method_name, "distance": metric,
-                "silhouette": sil, "davies_bouldin_euclidean": db,
-                "calinski_harabasz_euclidean": ch,
-                "smallest_cluster_size": int(sizes.min()),
-                "largest_cluster_size": int(sizes.max()),
-                "cluster_sizes": str({int(i): int(v) for i, v in sizes.items()}),
-                "ari_vs_kmeans_same_k": ari,
-            })
-            for cid, label in zip(df["catchment_id"], labels):
-                hier_assignments.append({
-                    "catchment_id": cid, "method": method_name, "distance": metric,
-                    "k": k, "cluster": int(label),
-                })
-    hier_df = pd.DataFrame(hier_rows)
-    hier_df.to_csv(DATA / "final_hierarchical_comparison.csv", index=False)
-    pd.DataFrame(hier_assignments).to_csv(DATA / "final_hierarchical_assignments.csv", index=False)
-    log("\nHIERARCHICAL CLUSTERING COMPARISON")
-    log(hier_df.round(4).to_string(index=False))
-    log("ARI compares each hierarchical partition with K-Means at the same k; cluster labels are permutation-invariant.")
-    log("Ward linkage uses Euclidean distance; Manhattan is evaluated with average linkage.")
-    log("Davies-Bouldin and Calinski-Harabasz are Euclidean-space diagnostics, including for Manhattan partitions.")
+    # Distance-method comparison: standard K-Means is Euclidean by design.
+    # Compare it with a PAM-style K-Medoids model using Manhattan distances.
+    # Silhouette is computed with each method's own distance geometry; DBI/CH
+    # are supplementary Euclidean-space diagnostics and are not directly
+    # equivalent to the Manhattan objective.
+    distance_rows = []
+    distance_assignments = []
+    for k in [5, 6]:
+        km_labels = labels_by_k[k]
+        distance_rows.append({
+            "k": k, "method": "K-Means", "distance": "Euclidean",
+            "objective_name": "within-cluster sum of squared Euclidean distances (inertia)",
+            "objective_value": float(models[k].inertia_),
+            "silhouette_matching_distance": float(silhouette_score(X, km_labels, metric="euclidean")),
+            "davies_bouldin_euclidean_diagnostic": float(davies_bouldin_score(X, km_labels)),
+            "calinski_harabasz_euclidean_diagnostic": float(calinski_harabasz_score(X, km_labels)),
+            "smallest_cluster_size": int(pd.Series(km_labels).value_counts().min()),
+            "largest_cluster_size": int(pd.Series(km_labels).value_counts().max())
+        })
+        for cluster_id, label in enumerate(km_labels):
+            distance_assignments.append({"catchment_id": df.loc[cluster_id, "catchment_id"], "k": k,
+                                         "method": "K-Means", "distance": "Euclidean", "cluster": int(label)})
+
+        med_labels, medoid_indices, manhattan_cost = pam_kmedoids_manhattan(X, k)
+        counts = pd.Series(med_labels).value_counts()
+        distance_rows.append({
+            "k": k, "method": "K-Medoids (PAM-style)", "distance": "Manhattan",
+            "objective_name": "sum of Manhattan distances to assigned medoids",
+            "objective_value": manhattan_cost,
+            "silhouette_matching_distance": float(silhouette_score(X, med_labels, metric="manhattan")),
+            "davies_bouldin_euclidean_diagnostic": float(davies_bouldin_score(X, med_labels)),
+            "calinski_harabasz_euclidean_diagnostic": float(calinski_harabasz_score(X, med_labels)),
+            "smallest_cluster_size": int(counts.min()),
+            "largest_cluster_size": int(counts.max())
+        })
+        for row_idx, label in enumerate(med_labels):
+            distance_assignments.append({"catchment_id": df.loc[row_idx, "catchment_id"], "k": k,
+                                         "method": "K-Medoids (PAM-style)", "distance": "Manhattan", "cluster": int(label)})
+        pd.DataFrame({"medoid_index": medoid_indices,
+                      "catchment_id": df.loc[medoid_indices, "catchment_id"].astype(str).to_numpy()}).to_csv(
+                          DATA / f"final_kmedoids_manhattan_k{k}_medoids.csv", index=False)
+
+    distance_comparison = pd.DataFrame(distance_rows)
+    distance_comparison.to_csv(DATA / "final_distance_method_comparison.csv", index=False)
+    pd.DataFrame(distance_assignments).to_csv(DATA / "final_distance_method_assignments.csv", index=False)
+    log("\nDISTANCE-METHOD COMPARISON (K-Means Euclidean vs K-Medoids Manhattan)")
+    log(distance_comparison.round(4).to_string(index=False))
+    log("Note: objective values are method-specific and must not be compared numerically across methods.")
+    log("Silhouette uses each method's stated distance. Davies-Bouldin and Calinski-Harabasz are Euclidean diagnostics only.")
+    log("K-Medoids implementation: greedy BUILD initialization + best-improving medoid swaps; results are heuristic, not a proof of global optimum.")
+
+    # PCA is used only to visualise the standardised feature space.
+    # Clustering itself remains fitted on all selected standardised features.
+    pca = PCA(n_components=2)
+    X_pca = pca.fit_transform(X)
+    pca_variance = pd.DataFrame({
+        "component": ["PC1", "PC2"],
+        "explained_variance_ratio": pca.explained_variance_ratio_,
+        "explained_variance_percent": pca.explained_variance_ratio_ * 100,
+    })
+    pca_variance.to_csv(DATA / "final_pca_explained_variance.csv", index=False)
+    pca_loadings = pd.DataFrame(
+        pca.components_.T, index=features, columns=["PC1_loading", "PC2_loading"]
+    ).rename_axis("feature").reset_index()
+    pca_loadings.to_csv(DATA / "final_pca_loadings.csv", index=False)
+    log("\nPCA VISUALISATION (two components; clustering still uses all features)")
+    log(pca_variance.round(4).to_string(index=False))
+    log(f"Combined variance explained by PC1 and PC2: {pca.explained_variance_ratio_.sum() * 100:.2f}%")
+    log("PCA loadings saved to data/processed/final_pca_loadings.csv")
 
     # Figures.
     try:
@@ -301,6 +379,32 @@ def main():
             fig.tight_layout()
             fig.savefig(FIGURES / filename, dpi=180)
             plt.close(fig)
+        # Separate PCA scatter plots make the k=5 and k=6 solutions easy to compare.
+        for k in [5, 6]:
+            labels = labels_by_k[k]
+            fig, ax = plt.subplots(figsize=(8, 6))
+            for cluster_id in sorted(np.unique(labels)):
+                mask = labels == cluster_id
+                ax.scatter(
+                    X_pca[mask, 0], X_pca[mask, 1],
+                    label=f"Cluster {cluster_id} (n={int(mask.sum())})",
+                    alpha=0.8, s=38, edgecolors="none"
+                )
+            ax.set_title(
+                f"PCA projection of catchments — K={k}\n"
+                f"PC1: {pca.explained_variance_ratio_[0]*100:.1f}% | "
+                f"PC2: {pca.explained_variance_ratio_[1]*100:.1f}% variance"
+            )
+            ax.set_xlabel("Principal Component 1")
+            ax.set_ylabel("Principal Component 2")
+            ax.axhline(0, linewidth=0.6, alpha=0.35)
+            ax.axvline(0, linewidth=0.6, alpha=0.35)
+            ax.grid(True, alpha=0.2)
+            ax.legend(title="K-Means group", fontsize=8)
+            fig.tight_layout()
+            fig.savefig(FIGURES / f"final_pca_k{k}.png", dpi=180)
+            plt.close(fig)
+
         fig, ax = plt.subplots(figsize=(7.5, 4.5))
         ax.plot(stability["k"], stability["mean_pairwise_ARI"], marker="o")
         ax.set(title="K-Means Stability Across Random Seeds", xlabel="k",
@@ -321,8 +425,7 @@ def main():
             f"DB={ev.loc[k, 'davies_bouldin']:.4f}; "
             f"mean pairwise ARI={stab.loc[k, 'mean_pairwise_ARI']:.4f}; "
             f"min pairwise ARI={stab.loc[k, 'min_pairwise_ARI']:.4f}")
-    log("Working recommendation: retain K-Means k=6 as the leading candidate, with k=5 as a simpler sensitivity alternative.")
-    log("Hierarchical comparison is supplementary: evaluate separation, stability, cluster sizes and interpretability together.")
+    log("Working recommendation: retain k=6 as the leading candidate, then report the evidence and caveats.")
     log("Do not label clusters Low/Medium/High flood risk: no independent flood outcomes were used.")
     log("Interpret clusters as exploratory rainfall–terrain patterns, not flood probabilities.")
     log("Any cluster with low or negative silhouette must be described as overlapping/weakly separated.")

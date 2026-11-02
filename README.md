@@ -2,16 +2,16 @@
 
 ### Exploratory clustering of rainfall–terrain patterns across Himalayan catchments
 
-[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/) [![Streamlit](https://img.shields.io/badge/Dashboard-Streamlit-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/) [![Method](https://img.shields.io/badge/Method-Unsupervised%20Learning-0F766E)](#methodology)
-
+[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/) [![Dashboard](https://img.shields.io/badge/Dashboard-Streamlit-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/) [![Method](https://img.shields.io/badge/Method-Unsupervised%20Learning-0F766E)](#methodology)
 
 **Unsupervised Learning Research Project**  
 **Study region:** Himachal Pradesh and Uttarakhand, India  
-**Study period:** 2019–2024
+**Rainfall period:** 2019–2024  
+**Current analysis table:** 113 catchments × 9 selected features
 
-The **Flash-Flood Pattern Atlas** explores how hilly catchments differ in their monsoon rainfall characteristics and terrain. It combines daily gridded rainfall, terrain metrics derived from elevation data, and HydroBASINS catchment boundaries. Unsupervised-learning methods are then used to group catchments with similar feature profiles and explore how those groups vary spatially.
+The **Flash-Flood Pattern Atlas** is an exploratory research and visualization project. It combines IMD daily gridded rainfall, terrain characteristics derived from SRTM elevation data, and HydroBASINS Level 8 catchment boundaries. Unsupervised-learning methods group catchments with similar rainfall–terrain profiles and support inspection of those patterns spatially.
 
-> **Important research boundary:** The clusters are exploratory rainfall–terrain pattern groups. They are **not validated flood-risk classes, flood forecasts, or estimates of flood probability**. Independent observed flood-event labels were not used to train or validate this analysis.
+> **Research boundary:** These are exploratory rainfall–terrain pattern groups—not validated flood-risk classes, flood forecasts, or estimates of flood probability. Independent observed flood-event labels were not used to train or validate the clusters. Do not use this project for emergency, warning, or site-specific safety decisions.
 
 ---
 
@@ -19,14 +19,16 @@ The **Flash-Flood Pattern Atlas** explores how hilly catchments differ in their 
 
 - [Project at a glance](#project-at-a-glance)
 - [Research questions](#research-questions)
-- [Data sources](#data-sources)
+- [Data sources and coverage](#data-sources-and-coverage)
 - [Features used](#features-used)
+- [Reproducible pipeline](#reproducible-pipeline)
 - [Methodology](#methodology)
-- [Preliminary findings](#preliminary-findings)
+- [Current analysis results](#current-analysis-results)
 - [Interactive dashboard](#interactive-dashboard)
 - [Repository structure](#repository-structure)
-- [Installation and use](#installation-and-use)
-- [Reproducibility notes](#reproducibility-notes)
+- [Installation and execution](#installation-and-execution)
+- [Generated outputs](#generated-outputs)
+- [Reproducibility and data handling](#reproducibility-and-data-handling)
 - [Limitations and next steps](#limitations-and-next-steps)
 - [References and acknowledgements](#references-and-acknowledgements)
 
@@ -34,41 +36,43 @@ The **Flash-Flood Pattern Atlas** explores how hilly catchments differ in their 
 
 | Item | Description |
 |---|---|
-| Objective | Discover groups of catchments with similar rainfall and terrain characteristics |
-| Study area | Hilly catchments in Himachal Pradesh and Uttarakhand, India |
-| Time window | Daily rainfall data from 2019 through 2024 |
-| Catchment framework | HydroBASINS Level 8 catchments; study workflow applies a 50 km² minimum-area criterion |
-| Modelling dataset | 113 catchments, 9 selected numeric features, no missing/non-finite feature values in the final modelling table |
-| Main algorithm | K-Means clustering after feature standardisation |
-| Additional analysis | Cluster validation, random-seed stability, hierarchical clustering, PCA, and a Manhattan-distance medoid-style comparison |
-| Dashboard | Streamlit, with catchment mapping, cluster profiles, PCA exploration, validation metrics, and a dataset explorer |
+| Goal | Explore groups of catchments with similar rainfall and terrain characteristics |
+| Study area | Selected Himalayan catchments in Himachal Pradesh and Uttarakhand, India |
+| Rainfall period | IMD daily rainfall, 2019–2024 |
+| Catchment framework | HydroBASINS Level 8; catchment selection applies the study-area boundary and a minimum-area criterion of 50 km² |
+| Final clustering table | 113 catchments and 9 selected numeric features |
+| Main method | Standardized-feature K-Means |
+| Candidate solutions | k = 5 and k = 6 retained for comparison |
+| Supplementary method | K-Medoids (PAM-style) using Manhattan distance |
+| Validation | Silhouette, Davies–Bouldin, cluster-size diagnostics, and random-seed stability |
+| Visualization | PCA projection, catchment map, cluster profiles, and Streamlit dashboard |
 
 ## Research questions
 
 1. Do catchments in the study area form distinguishable groups based on rainfall and terrain characteristics?
-2. How do candidate cluster solutions compare under internal validation metrics and repeated random initialisations?
-3. Which features most clearly describe differences between the resulting groups?
-4. How can these patterns be explored on a catchment map without treating cluster membership as a measured flood outcome?
+2. How do candidate cluster counts compare using internal validation measures and repeated random initializations?
+3. How do cluster profiles differ in the original rainfall and terrain units?
+4. How do Euclidean K-Means and Manhattan-distance K-Medoids compare as exploratory grouping approaches?
+5. How can the patterns be mapped without presenting cluster membership as a measured flood outcome?
 
-## Data sources
+## Data sources and coverage
 
-The analysis combines three core data types:
-
-| Data | Role in the project | Source |
+| Dataset | Use | Source |
 |---|---|---|
-| IMD daily gridded rainfall at 0.25° resolution | Rainfall history and heavy-rainfall indicators for 2019–2024 | [India Meteorological Department — 0.25° daily rainfall NetCDF](https://www.imdpune.gov.in/cmpg/Griddata/Rainfall_25_NetCDF.html) |
-| SRTM elevation data | Elevation, relief, slope, and slope variability derived for each catchment | [USGS — SRTM 1 Arc-Second Global](https://www.usgs.gov/centers/eros/science/usgs-eros-archive-digital-elevation-shuttle-radar-topography-mission-srtm-1/) |
-| HydroBASINS Level 8 basin polygons | Catchment boundaries and catchment identifiers | [HydroBASINS — HydroSHEDS](https://www.hydrosheds.org/products/hydrobasins) |
+| IMD daily gridded rainfall, 0.25° × 0.25°, annual NetCDF files for 2019–2024 | Catchment rainfall summaries and heavy-rainfall indicators | [IMD rainfall dataset](https://www.imdpune.gov.in/cmpg/Griddata/Rainfall_25_NetCDF.html) |
+| SRTM 1 Arc-Second Global elevation tiles | Elevation, relief, and slope summaries | [USGS SRTM documentation](https://www.usgs.gov/centers/eros/science/usgs-eros-archive-digital-elevation-shuttle-radar-topography-mission-srtm-1/) |
+| HydroBASINS Level 8 polygons | Catchment boundaries and identifiers | [HydroBASINS / HydroSHEDS](https://www.hydrosheds.org/products/hydrobasins) |
+| Study boundary layer | Geographic selection of the study region; not a clustering feature | Project input boundary data |
 
-Study-boundary files, including the state/NWIC boundary layer where used, support geographic selection of the study region. They are not among the nine clustering features.
+The pipeline preflight reported six annual IMD NetCDF files (2019–2024) and 42 SRTM HGT tiles in the local input folders. These are input availability checks; they do not by themselves establish that every source pixel is valid or complete.
 
-### Data handling
+The rainfall and terrain feature tables each contain 115 catchment records. Two catchments were excluded from the merged/modeling table because their rainfall spatial-coverage fractions did not meet the implemented coverage rule, despite complete temporal coverage. The resulting modeling/clustering table contains 113 catchments. The exclusion details are recorded in `rainfall_coverage_exclusions.csv`; document the exact spatial-coverage cutoff from the preprocessing code when reporting the method.
 
-Large source datasets—especially the annual NetCDF rainfall files and SRTM tiles—should normally remain outside ordinary Git commits. The repository should retain the processed tables needed by the dashboard, the analysis scripts, source links, and clear download/preparation instructions. Always follow the data provider's terms and attribution requirements before redistributing source files.
+Large source datasets—especially annual NetCDF files and SRTM tiles—should generally remain outside ordinary Git commits. Keep scripts, source links, processing instructions, and appropriate derived outputs in the repository. Follow the data providers’ current attribution and usage terms.
 
 ## Features used
 
-The modelling dataset contains the following nine features:
+The final clustering dataset uses these nine features:
 
 | Feature | Interpretation |
 |---|---|
@@ -82,156 +86,233 @@ The modelling dataset contains the following nine features:
 | `mean_slope_deg` | Mean slope in degrees |
 | `slope_std_deg` | Standard deviation of slope in degrees |
 
-Rainfall features are derived from the 2019–2024 daily record, with monsoon months defined in the extraction script as June–September. Heavy and very-heavy daily rainfall thresholds are 50 mm and 100 mm, respectively.
+Rainfall summaries are derived from the 2019–2024 daily record. The extraction workflow defines monsoon months as June–September and uses daily rainfall thresholds of 50 mm and 100 mm for heavy and very-heavy rainfall indicators. The clustering feature table is standardized before distance-based clustering because the features have different measurement units and scales.
 
-## Methodology
+## Reproducible pipeline
 
-1. **Prepare the study area.** Select HydroBASINS Level 8 catchments intersecting the study region and apply the study workflow's catchment-area criterion.
-2. **Extract rainfall features.** Use the IMD 0.25° gridded daily rainfall record to derive catchment-level rainfall measures, using area-weighted aggregation across intersecting grid cells.
-3. **Derive terrain features.** Use SRTM elevation tiles to calculate catchment elevation and slope summaries.
-4. **Build the modelling table.** Join rainfall and terrain features by catchment identifier, inspect coverage, and retain valid rows.
-5. **Select and standardise features.** Use the nine documented variables and standardise them before distance-based clustering so differences in measurement units do not dominate by scale alone.
-6. **Evaluate K-Means solutions.** Test cluster counts from *k = 2* to *k = 8*, using internal metrics such as silhouette score, Davies–Bouldin index, and Calinski–Harabasz score.
-7. **Check robustness and compare approaches.** Re-run candidate solutions across multiple random seeds; compare cluster stability and conduct supplementary hierarchical, PCA, and Manhattan-distance medoid-style analyses.
-8. **Explore the results.** Use the Streamlit dashboard to inspect cluster assignments, feature profiles, catchment patterns, and validation summaries.
+The project includes a pipeline entry point, `pipeline.py`, intended to orchestrate the preprocessing and final analysis scripts in sequence. Run it from the repository root so relative file paths resolve correctly.
 
-PCA is used as a dimensionality-reduction and visualisation aid. The primary K-Means model is fit using all nine standardised features, not just the two plotted PCA components.
+### Pipeline stages
 
-## Preliminary findings
+1. **Preflight checks:** check the required HydroBASINS Level 8 shapefile, study boundary, six annual rainfall NetCDF files, 42 SRTM HGT tiles, and expected source scripts.
+2. **Prepare rainfall input:** combine annual IMD rainfall files into the pipeline’s interim multi-year NetCDF.
+3. **Prepare catchments:** create the study-region catchment set from HydroBASINS and the study boundary; apply the 50 km² catchment-area filter.
+4. **Extract rainfall features:** calculate catchment-level rainfall indicators and coverage information.
+5. **Extract terrain features:** derive terrain summaries from the SRTM tiles.
+6. **Build the modeling dataset:** merge rainfall and terrain tables by catchment identifier and apply coverage/valid-row checks.
+7. **Select clustering features:** create the nine-feature clustering dataset.
+8. **Run final analysis:** evaluate K-Means candidates, compare K-Means with Manhattan-distance K-Medoids, produce assignments/profiles, inspect seed stability, and export PCA diagnostics and related tables.
 
-The current consolidated analysis produced the following results on 113 catchments:
+`create_final_catchments.py` is a preprocessing step in the pipeline: it creates the catchment boundary GeoPackage used by later feature extraction and mapping. It should be called by `pipeline.py`; merely storing the script in the repository does not execute it.
 
-| Diagnostic | K = 5 | K = 6 |
-|---|---:|---:|
-| Overall silhouette score | **0.3257** | 0.3235 |
-| Davies–Bouldin index | **1.0270** | 1.0275 |
-| Mean pairwise adjusted Rand index across 10 seeds | 0.9110 | **0.9913** |
-| Minimum pairwise adjusted Rand index across 10 seeds | 0.7492 | **0.9809** |
-| Smallest cluster in the reported solution | 9 catchments | 7 catchments |
+### Run the pipeline
 
-The current analysis therefore retains both solutions for interpretation: **k = 5 has marginally stronger internal separation metrics, while k = 6 shows substantially higher stability across tested random seeds**. Neither result alone establishes that the groups correspond to actual flood events or real-world risk levels.
+From the project root:
 
-The first two principal components explain approximately **73.72%** of the standardised feature variance (PC1: 50.14%; PC2: 23.58%). This is useful for visual exploration, but a two-dimensional projection cannot preserve every relationship in the full feature space.
+```bash
+python pipeline.py --check-only
+```
 
-These are exploratory results and may change if the input data, feature choices, preprocessing, or analysis code changes. Refer to the generated report and CSV outputs for the detailed metrics and cluster profiles.
+This performs readiness checks only. It does **not** process the datasets or generate the final CSV outputs.
 
-## Interactive dashboard
+When preflight passes, execute the full workflow:
 
-The Streamlit app provides these sections:
+```bash
+python pipeline.py
+```
 
-- **Overview** — project snapshot, cluster counts, and interpretation guardrails.
-- **Catchment map** — catchments coloured by exploratory cluster membership, when the GeoPackage is available.
-- **Cluster profiles** — feature summaries in original units and standardised profiles.
-- **PCA explorer** — two-component projection and component loadings.
-- **Validation & methods** — K-Means evaluation, seed stability, and available supplementary comparisons.
-- **Dataset explorer** — filter and download the processed catchment-level data and assignments.
+The full workflow can take substantial time because it processes geospatial rasters and rainfall grids. Check the terminal output for the first error if a stage fails. Do not assume the pipeline completed successfully just because preflight passed.
 
 ### Run the dashboard
 
-Run the following commands from the repository root, where `app.py` and `requirements-dashboard.txt` are located:
+After the pipeline has generated the required outputs:
 
 ```bash
-python -m venv .venv
-```
-
-Activate the environment, then install the dashboard dependencies:
-
-**Windows PowerShell**
-
-```powershell
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install -r requirements-dashboard.txt
 streamlit run app.py
 ```
 
-**macOS / Linux**
+The dashboard reads existing processed files; it does not rerun the full preprocessing pipeline or retrain the clustering analysis on startup.
 
-```bash
-source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install -r requirements-dashboard.txt
-streamlit run app.py
-```
+## Methodology
 
-Streamlit will print a local URL, usually `http://localhost:8501`.
+1. **Catchment preparation.** Select HydroBASINS Level 8 catchments within the study boundary and apply the minimum catchment-area criterion.
+2. **Rainfall feature extraction.** Derive catchment-level statistics from IMD daily gridded rainfall. The workflow uses area-weighted aggregation across intersecting grid cells.
+3. **Terrain feature extraction.** Use SRTM elevation data to derive catchment elevation, relief, and slope summaries.
+4. **Dataset assembly and coverage screening.** Join rainfall and terrain features by catchment ID, check spatial coverage, and retain valid rows. Keep catchment IDs as strings to avoid accidental numeric conversion.
+5. **Feature selection and scaling.** Use the nine documented features and standardize them before clustering.
+6. **K-Means evaluation.** Evaluate candidate cluster counts from k = 2 through k = 8 with internal metrics, including silhouette, Davies–Bouldin, and Calinski–Harabasz diagnostics.
+7. **Candidate comparison and stability.** Retain k = 5 and k = 6 for interpretation and assess consistency across tested random seeds using adjusted Rand index (ARI).
+8. **Distance-method comparison.** Compare Euclidean K-Means with a PAM-style K-Medoids implementation using Manhattan distance. The medoid procedure uses heuristic initialization and improving swaps; it is not a guarantee of a global optimum.
+9. **PCA exploration.** Use a two-component PCA projection for visualization and report explained variance/loadings. PCA is not the space in which the primary K-Means solution is fitted; clustering uses all nine standardized features.
+10. **Dashboard exploration.** Inspect assignments, cluster sizes, original-unit and standardized profiles, map patterns, and validation outputs.
 
-The dashboard reads existing result files from `data/processed/`; it does **not** retrain K-Means when it starts. Ensure the processed CSVs are in place. The catchment map also requires `data/processed/final_catchments_L8_50km2.gpkg`. The app handles optional comparison files gracefully when they are not present.
+**Metric interpretation:** K-Means inertia and K-Medoids’ sum of Manhattan distances to medoids are different objectives. Their raw objective values must not be compared numerically as though they measured the same thing. The comparison report uses each method’s stated distance for silhouette; Davies–Bouldin and Calinski–Harabasz are Euclidean diagnostics.
+
+## Current analysis results
+
+The current consolidated output reports 113 catchments. Results below are from the current generated analysis and may change if source data, preprocessing, features, or code changes.
+
+| Diagnostic | k = 5 | k = 6 |
+|---|---:|---:|
+| Silhouette score | **0.3257** | 0.3235 |
+| Davies–Bouldin index | **1.0270** | 1.0275 |
+| Mean pairwise ARI across 10 seeds | 0.9110 | **0.9913** |
+| Minimum pairwise ARI across 10 seeds | 0.7492 | **0.9809** |
+| Smallest cluster size | 9 | 7 |
+
+The current evidence is mixed: **k = 5 has slightly stronger internal separation scores; k = 6 has much higher consistency across the tested random seeds.** Keep both as candidates and explain the selection rationale. Stability across seeds does not prove that clusters are physically meaningful or correspond to flood occurrence.
+
+The first two PCA components explain approximately **73.72%** of the standardized feature variance (PC1: 50.14%; PC2: 23.58%). A 2D projection is useful for inspection but cannot preserve all structure in the full nine-dimensional feature space.
+
+For the Euclidean K-Means vs. Manhattan K-Medoids comparison, use `final_distance_method_comparison.csv` and the associated assignment/medoid files. Interpret silhouette scores using the relevant method distance and do not compare method-specific objective values directly.
+
+## Interactive dashboard
+
+The Streamlit dashboard provides:
+
+- **Overview** — study snapshot, catchment count, selected solution, cluster counts, and interpretation caveats.
+- **Catchment map** — catchments colored by exploratory cluster membership when the catchment GeoPackage is available.
+- **Cluster profiles** — summaries in original units and standardized profile views.
+- **PCA explorer** — two-component projection and component loadings.
+- **Validation & methods** — K-Means evaluation, seed stability, and available distance-method comparison.
+- **Dataset explorer** — inspect and download processed catchment-level data and assignments.
+
+The project’s Streamlit header/toolbar is intentionally hidden in the current UI styling.
 
 ## Repository structure
 
-The repository is organised around source code, processed outputs, and analysis reports. A typical layout is:
+The intended repository layout is organized by pipeline entry points, source scripts, and data stages. Match this structure to the actual files in your checkout; filenames must match the paths invoked by `pipeline.py`.
 
 ```text
 Flash-Flood-Risk-Clustering/
 ├── app.py
-├── requirements-dashboard.txt
-├── create_final_catchments.py
-├── get_srtm_tiles.py
-├── data/
-│   ├── hydrobasins/              # downloaded catchment source data
-│   ├── interim/                  # study boundaries and prepared inputs
-│   ├── raw/srtm/                 # local SRTM elevation tiles
-│   └── processed/                # modelling tables, assignments, profiles
+├── download.py
+├── pipeline.py
+├── requirements.txt
+├── README.md
 ├── src/
+│   ├── create_final_catchments.py
 │   ├── extract_rainfall_features.py
 │   ├── extract_terrain_features.py
 │   ├── build_modeling_dataset.py
 │   ├── select_clustering_features.py
-│   ├── run_kmeans_experiments.py
-│   ├── analyze_kmeans_clusters.py
-│   ├── analyze_six_clusters.py
-│   ├── test_clusters_stability.py
-│   ├── final_project_analysis.py
 │   └── final_project_analysis_pca_manhattan.py
+├── data/
+│   ├── hydrobasins/       # HydroBASINS Level 8 source files
+│   ├── raw/               # downloaded source data, including SRTM tiles
+│   ├── interim/           # study boundary and prepared intermediate inputs
+│   └── processed/         # feature tables, clustering outputs, and profiles
 └── reports/
-    ├── final_analysis_report.txt
-    └── figures/
+    └── figures/           # generated analysis figures, if retained
 ```
 
-Some source datasets and generated files may be omitted from a GitHub clone because of size. Check the required paths at the top of each preprocessing script before running the complete pipeline; a script may expect an intermediate file to have been prepared locally.
+Diagnostic scripts and exploratory notebooks (for example, catchment-size checks, correlation checks, SRTM tile listing, and rainfall data exploration) are useful for research and troubleshooting, but are not automatically executed unless `pipeline.py` explicitly calls them. An optional NASA Earthdata SRTM downloader is an alternate acquisition route; do not run it redundantly when the project’s `download.py` already obtains the required SRTM inputs.
 
-## Reproducibility notes
+## Installation and execution
 
-- Run commands from the repository root so relative paths resolve correctly.
-- Use the exact rainfall period (2019–2024), monsoon months (June–September), and rainfall thresholds documented above when recreating the feature table.
-- The analysis code uses `StandardScaler` before K-Means. Keep preprocessing and scaling consistent when comparing experiments.
-- Random seeds and the number of initialisations affect clustering. Record these settings when modifying scripts.
-- Preserve catchment identifiers as strings when reading or writing CSVs to avoid accidental numeric conversion.
-- The analysis scripts produce overlapping `final_*` output names. Before running multiple alternative final-analysis scripts, preserve any results you need to compare and note which script generated each output.
-- Do not compare raw objective values between algorithms that optimise different objective functions as if they were directly equivalent.
+Use a Python environment compatible with the dependencies listed in the repository’s `requirements.txt`. Geospatial libraries can have platform-specific installation requirements; use the project dependency file rather than installing packages ad hoc.
+
+### Windows PowerShell
+
+```powershell
+cd "C:\Users\mangi\Desktop\INT396 Project"
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+
+# Optional: acquire/extract inputs using the project's download script
+python download.py
+
+# Verify inputs and expected scripts only
+python pipeline.py --check-only
+
+# Execute the full preprocessing and analysis pipeline
+python pipeline.py
+
+# Launch the dashboard after the pipeline has completed
+streamlit run app.py
+```
+
+If your repository uses a separate dashboard dependency file, install that file as documented in the checked-in repository. The command above assumes `requirements.txt` includes the dependencies needed for the pipeline and dashboard.
+
+## Generated outputs
+
+The pipeline writes its CSV outputs under `data/processed/`. The current generated set includes the following core outputs (some are optional diagnostics or analysis products):
+
+| Output | Purpose |
+|---|---|
+| `catchment_rainfall_features.csv` | Catchment rainfall feature table |
+| `catchment_terrain_features.csv` | Catchment terrain feature table |
+| `catchment_features_merged_all.csv` | Joined rainfall–terrain table before final screening |
+| `modeling_dataset.csv` | Valid merged dataset used for modeling |
+| `clustering_dataset.csv` | Final nine-feature clustering input |
+| `rainfall_coverage_exclusions.csv` | Catchments excluded by rainfall coverage screening |
+| `feature_summary.csv` / `final_feature_summary.csv` | Feature summary diagnostics |
+| `feature_correlation.csv` / `final_feature_correlation.csv` | Feature correlation diagnostics |
+| `clustering_feature_correlation.csv` | Correlation diagnostics for the selected clustering features |
+| `final_kmeans_evaluation.csv` | K-Means candidate metrics and cluster-size diagnostics |
+| `final_k5_assignments.csv`, `final_k6_assignments.csv` | Catchment cluster labels for k = 5 and k = 6 |
+| `final_k5_profiles_original_units.csv`, `final_k6_profiles_original_units.csv` | Cluster profiles in original feature units |
+| `final_k5_profiles_zscores.csv`, `final_k6_profiles_zscores.csv` | Standardized cluster profiles |
+| `final_k5_silhouette_by_cluster.csv`, `final_k6_silhouette_by_cluster.csv` | Cluster-level silhouette summaries |
+| `final_distance_method_comparison.csv` | K-Means Euclidean vs. K-Medoids Manhattan comparison |
+| `final_distance_method_assignments.csv` | Assignments for the distance-method comparison |
+| `final_kmedoids_manhattan_k5_medoids.csv`, `final_kmedoids_manhattan_k6_medoids.csv` | Selected medoids for the Manhattan K-Medoids solutions |
+| `final_seed_metrics.csv`, `final_seed_stability_summary.csv` | Per-seed metrics and stability summaries |
+| `final_pca_explained_variance.csv`, `final_pca_loadings.csv` | PCA variance and loading diagnostics |
+| `final_feature_set_sensitivity.csv` | Feature-set sensitivity check, when generated |
+| `final_high_feature_correlations.csv` | High-correlation feature pairs, when generated |
+
+The catchment boundary GeoPackage is used by the map and should be present at the path expected by the dashboard (currently `data/processed/final_catchments_L8_50km2.gpkg`). The exact output list can vary by pipeline version; check the script’s output definitions before assuming an optional file will be generated.
+
+## Reproducibility and data handling
+
+- Run commands from the repository root.
+- `python pipeline.py --check-only` validates inputs and expected scripts; it does not generate the processed tables.
+- `python pipeline.py` is the full processing command.
+- Keep the rainfall window (2019–2024), monsoon definition (June–September), rainfall thresholds (50 mm and 100 mm), catchment-area criterion, and coverage rule consistent when reproducing the current outputs.
+- Preserve catchment IDs as strings when reading, joining, or writing CSVs.
+- Record the script version, parameters, feature set, random seeds, and source data versions for each final run.
+- Avoid committing large raw NetCDF and SRTM files unless repository storage and provider terms allow it. Use clear instructions for acquiring source data.
+- Keep generated outputs separate from source inputs and intermediate files.
+- Pipeline preflight passing confirms required inputs/scripts were found; it does not prove that the complete workflow ran or that the analysis is scientifically validated.
+- Do not compare objective values from algorithms that optimize different functions directly.
+- Keep optional diagnostics/notebooks separate from the core automated workflow unless they are explicitly wired into `pipeline.py`.
 
 ## Limitations and next steps
 
 ### Current limitations
 
-- **No independent observed flood labels:** This is pattern discovery, not supervised flood prediction or validated risk classification.
-- **Moderate cluster separation:** Internal validation metrics indicate some separation, but the groups are not perfectly distinct.
-- **Small clusters:** Some clusters contain relatively few catchments and should be interpreted cautiously.
-- **Feature dependence:** Several rainfall variables are correlated, so similar information may contribute through more than one feature.
-- **Spatial and temporal scope:** Findings are tied to the selected catchments and the 2019–2024 rainfall period; they should not be generalised automatically to other regions or periods.
-- **Input-data uncertainty:** Gridded rainfall and terrain products have resolution and measurement limitations that may affect catchment summaries.
+- **No independent observed flood labels:** this is unsupervised pattern discovery, not supervised flood prediction or validated risk classification.
+- **Moderate separation:** silhouette scores around 0.32 suggest meaningful but not cleanly separated groups; inspect overlap and cluster-level diagnostics.
+- **Small clusters:** the k = 6 solution includes a cluster of only 7 catchments. Interpret small groups cautiously and examine their feature profiles and geography.
+- **Feature dependence:** rainfall indicators may be correlated, meaning related rainfall information can influence clustering more than once.
+- **Spatial and temporal scope:** findings apply to the selected catchments and 2019–2024 rainfall period; they should not automatically be generalized to other regions or periods.
+- **Input uncertainty:** gridded rainfall resolution, spatial coverage, DEM resolution, and terrain derivation choices can affect catchment summaries.
+- **Method uncertainty:** different algorithms and distance measures can produce different partitions; internal metrics are not external validation.
 
 ### Recommended next steps
 
-1. Validate the discovered patterns against independent, georeferenced flood-event, flash-flood, or landslide records where coverage and quality permit.
-2. Conduct spatial and temporal sensitivity checks, including alternative catchment filters and rainfall periods.
-3. Document the source, version, preprocessing history, and licence/terms for every input dataset.
-4. Add a complete environment specification for the full preprocessing workflow, separate from dashboard-only dependencies.
-5. Treat any future risk interpretation as a separate validation task, with transparent evaluation against observed outcomes.
+1. Evaluate cluster patterns against independent, georeferenced flood-event records if reliable coverage is available.
+2. Run spatial and temporal sensitivity tests, including alternative coverage cutoffs, catchment-area criteria, and rainfall periods.
+3. Document exact preprocessing parameters and feature-selection rationale.
+4. Record package versions and confirm that a clean environment can execute the full pipeline from raw inputs.
+5. Report cluster-level overlap, small-cluster behavior, seed stability, and differences between candidate solutions.
+6. Treat any future flood-risk interpretation as a separate validation task against observed outcomes.
 
 ## References and acknowledgements
 
-1. **India Meteorological Department (IMD).** *Daily Gridded Rainfall Data Set over India, 0.25° × 0.25°, NetCDF.* [Dataset page](https://www.imdpune.gov.in/cmpg/Griddata/Rainfall_25_NetCDF.html). For academic use of this rainfall product, consult the IMD page's recommended citation: Pai et al. (2014), *Development of a new high spatial resolution (0.25° × 0.25°) long period daily gridded rainfall data set over India and its comparison with existing data sets over the region*, **MAUSAM**, 65(1), 1–18.
-2. **HydroBASINS / HydroSHEDS.** *Global sub-basin boundary data.* [Product page and documentation](https://www.hydrosheds.org/products/hydrobasins). See the product page for the applicable terms and attribution requirements.
+1. **India Meteorological Department (IMD).** *Daily Gridded Rainfall Data Set over India, 0.25° × 0.25°, NetCDF.* [Dataset page](https://www.imdpune.gov.in/cmpg/Griddata/Rainfall_25_NetCDF.html). For academic citation, consult the dataset page’s recommended reference: Pai et al. (2014), “Development of a new high spatial resolution (0.25° × 0.25°) long period daily gridded rainfall data set over India and its comparison with existing data sets over the region,” *MAUSAM*, 65(1), 1–18.
+2. **HydroBASINS / HydroSHEDS.** *Global sub-basin boundary data.* [Product page and documentation](https://www.hydrosheds.org/products/hydrobasins). Follow applicable terms and attribution requirements.
 3. **U.S. Geological Survey (USGS), EROS.** *Shuttle Radar Topography Mission (SRTM) 1 Arc-Second Global.* [Dataset documentation](https://www.usgs.gov/centers/eros/science/usgs-eros-archive-digital-elevation-shuttle-radar-topography-mission-srtm-1/).
-4. **scikit-learn.** [Clustering documentation](https://scikit-learn.org/stable/modules/clustering.html), [PCA documentation](https://scikit-learn.org/stable/modules/decomposition.html#pca).
+4. **scikit-learn.** [Clustering documentation](https://scikit-learn.org/stable/modules/clustering.html) and [PCA documentation](https://scikit-learn.org/stable/modules/decomposition.html#pca).
 5. **Streamlit.** [Documentation](https://docs.streamlit.io/).
 
-Please retain the original dataset attribution and follow each provider's current terms when publishing derived data or code.
+Please retain dataset attribution and follow each provider’s current terms when publishing code or derived data.
 
 ---
 
 ## Disclaimer
 
-This repository is an academic research and visualisation project. Its outputs should not be used for emergency decisions, public warning, or site-specific safety decisions. Cluster membership reflects similarity in the selected input features and has not been calibrated to the probability or severity of observed flash floods.
+This repository is an academic research and visualization project. Its outputs must not be used for emergency decisions, public warnings, or site-specific safety decisions. Cluster membership represents similarity in selected rainfall–terrain input features and has not been calibrated to the probability or severity of observed flash floods.
