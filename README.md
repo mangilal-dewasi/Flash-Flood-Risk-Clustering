@@ -105,33 +105,7 @@ The project includes a pipeline entry point, `pipeline.py`, intended to orchestr
 
 `create_final_catchments.py` is a preprocessing step in the pipeline: it creates the catchment boundary GeoPackage used by later feature extraction and mapping. It should be called by `pipeline.py`; merely storing the script in the repository does not execute it.
 
-### Run the pipeline
 
-From the project root:
-
-```bash
-python pipeline.py --check-only
-```
-
-This performs readiness checks only. It does **not** process the datasets or generate the final CSV outputs.
-
-When preflight passes, execute the full workflow:
-
-```bash
-python pipeline.py
-```
-
-The full workflow can take substantial time because it processes geospatial rasters and rainfall grids. Check the terminal output for the first error if a stage fails. Do not assume the pipeline completed successfully just because preflight passed.
-
-### Run the dashboard
-
-After the pipeline has generated the required outputs:
-
-```bash
-streamlit run app.py
-```
-
-The dashboard reads existing processed files; it does not rerun the full preprocessing pipeline or retrain the clustering analysis on startup.
 
 ## Methodology
 
@@ -210,7 +184,7 @@ Diagnostic scripts and exploratory notebooks (for example, catchment-size checks
 
 ## Installation and execution
 
-Use a Python environment compatible with the dependencies listed in the repository’s `requirements.txt`. Geospatial libraries can have platform-specific installation requirements; use the project dependency file rather than installing packages ad hoc.
+Use a Python environment compatible with the dependencies listed in the repository’s `requirements-dashboard.txt`. Geospatial libraries can have platform-specific installation requirements; use the project dependency file rather than installing packages ad hoc.
 
 ### Windows PowerShell
 
@@ -219,7 +193,7 @@ cd "C:\Users\mangi\Desktop\INT396 Project"
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
+python -m pip install -r requirements-dashboard.txt
 
 # Optional: acquire/extract inputs using the project's download script
 python download.py
@@ -231,10 +205,8 @@ python pipeline.py --check-only
 python pipeline.py
 
 # Launch the dashboard after the pipeline has completed
-streamlit run app.py
+streamlit run streamlit_app.py
 ```
-
-If your repository uses a separate dashboard dependency file, install that file as documented in the checked-in repository. The command above assumes `requirements.txt` includes the dependencies needed for the pipeline and dashboard.
 
 ## Generated outputs
 
