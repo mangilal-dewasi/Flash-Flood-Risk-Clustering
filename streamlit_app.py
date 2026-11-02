@@ -7,7 +7,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
-from objective2_page import render_objective2_page
+from metrics_comparison import render_objective2_page
 
 st.markdown(
     """
