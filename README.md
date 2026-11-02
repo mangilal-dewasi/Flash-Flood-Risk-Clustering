@@ -159,10 +159,10 @@ The intended repository layout is organized by pipeline entry points, source scr
 
 ```text
 Flash-Flood-Risk-Clustering/
-├── app.py
+├── streamlit_app.py
 ├── download.py
 ├── pipeline.py
-├── requirements.txt
+├── requirements-dashboard.txt
 ├── README.md
 ├── src/
 │   ├── create_final_catchments.py
