@@ -7,6 +7,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
+from objective2_page import render_objective2_page
 
 st.markdown(
     """
@@ -22,7 +23,7 @@ st.markdown(
     header[data-testid="stHeader"] {
     display: none !important;
     }
-    
+
     .stAppDeployButton {
         display: none !important;
     }
@@ -35,7 +36,7 @@ ROOT = Path(__file__).resolve().parent
 DATA = ROOT / 'data' / 'processed'
 FIGURES = ROOT / 'reports' / 'figures'
 
-st.set_page_config(page_title='Flash-Flood Pattern Atlas', page_icon='🌧️', layout='wide', initial_sidebar_state='expanded')
+st.set_page_config(page_title='Flash-Flood Pattern Clustering', page_icon='🌧️', layout='wide', initial_sidebar_state='expanded')
 
 st.markdown("""
 <style>
@@ -92,6 +93,7 @@ hr { border-color:var(--line); }
 .atlas-title { font-family:'Manrope',sans-serif; font-size:clamp(2rem,4vw,3.2rem); line-height:1.05; letter-spacing:-.06em; font-weight:800; color:#f3f8fc; margin:0 0 .75rem; }
 .atlas-subtitle { max-width:850px; color:#b2c4d4; font-size:1rem; line-height:1.65; margin:0; }
 .atlas-pill { display:inline-block; padding:.38rem .65rem; border:1px solid rgba(124,224,210,.25); border-radius:999px; color:#a9eee4; background:rgba(124,224,210,.07); font-size:.72rem; letter-spacing:.08em; text-transform:uppercase; margin-bottom:1rem; }
+.atlas-github-link,.atlas-github-link:link, .atlas-github-link:visited,.atlas-github-link:hover, .atlas-github-link:active {color: inherit !important; text-decoration: none !important; font-weight: 600;}
 @media(max-width:700px) { .block-container {padding:1rem 1rem 2rem;} .atlas-hero {padding:1.3rem;} }
 </style>""", unsafe_allow_html=True)
 
@@ -138,7 +140,7 @@ def pca_data(dataset):
     out = pd.DataFrame({'catchment_id': dataset['catchment_id'].astype(str), 'PC1': coords[:, 0], 'PC2': coords[:, 1]})
     return out, pca.explained_variance_ratio_, pca.components_, features
 
-st.markdown("""<section class='atlas-hero'><div class='atlas-pill'>Himalayan catchment intelligence</div><h1 class='atlas-title'>Flash-Flood Pattern CLustering</h1><p class='atlas-subtitle'>An exploratory research interface for discovering rainfall–terrain patterns across hilly catchments in Himachal Pradesh and Uttarakhand. Built on IMD rainfall, SRTM-derived terrain features and HydroBASINS catchments.</p><div class='atlas-eyebrow'>Deisgned and Developed by Mangilal Dewasi</div></section>""", unsafe_allow_html=True)
+st.markdown("""<section class='atlas-hero'><div class='atlas-pill'>Himalayan catchment intelligence</div><h1 class='atlas-title'>Flash-Flood Pattern Clustering</h1><p class='atlas-subtitle'>An exploratory research interface for discovering rainfall–terrain patterns across hilly catchments in Himachal Pradesh and Uttarakhand. Built on IMD rainfall, SRTM-derived terrain features and HydroBASINS catchments.</p><div class='atlas-eyebrow'>Designed and Developed by <a href='https://github.com/mangilal-dewasi' target='_blank' rel='noopener noreferrer' class='atlas-github-link'>Mangilal Dewasi</a></div></section>""", unsafe_allow_html=True)
 st.warning('Research boundary · These clusters describe exploratory rainfall–terrain patterns. They are not validated flood-risk classes or flood-probability estimates; independent observed flood outcomes were not used.')
 
 # Load the core data and handle missing optional analysis outputs gracefully.
@@ -183,7 +185,8 @@ with st.sidebar:
             'Cluster profiles',
             'PCA explorer',
             'Validation & methods',
-            'Dataset explorer'
+            'Metrics Comparison'
+         #   'Dataset explorer'
         ]
     )
 
@@ -323,21 +326,22 @@ elif view == 'Validation & methods':
     else:
         st.info('Hierarchical comparison file not present in the project yet. Expected: data/processed/final_hierarchical_comparison.csv')
     st.warning('Metrics from different distance definitions are not always directly comparable. Manhattan silhouette should use Manhattan distances; Euclidean Davies–Bouldin/Calinski–Harabasz values are supplementary diagnostics.')
-
-elif view == 'Dataset explorer':
-    st.subheader('Catchment-level dataset')
-    feature_options = [c for c in dataset.columns if c != 'catchment_id']
-    selected_features = st.multiselect('Features to display', feature_options, default=feature_options[:5], format_func=lambda c: FEATURE_LABELS.get(c, c))
-    filter_cluster = st.multiselect('Filter clusters', sorted(joined['cluster'].dropna().unique().astype(int).tolist()), default=sorted(joined['cluster'].dropna().unique().astype(int).tolist()))
-    shown = joined[joined['cluster'].isin(filter_cluster)][['catchment_id', 'cluster'] + selected_features]
-    st.dataframe(shown, use_container_width=True, hide_index=True)
-    st.download_button('Download filtered catchments (CSV)', data=shown.to_csv(index=False).encode('utf-8'), file_name=f'catchment_clusters_k{k_choice}.csv', mime='text/csv')
-    st.markdown('#### Feature distributions')
-    dist_feature = st.selectbox('Distribution feature', feature_options, format_func=lambda c: FEATURE_LABELS.get(c, c))
-    fig = px.histogram(joined, x=dist_feature, color='cluster_label', marginal='box', barmode='overlay', opacity=0.65, title=FEATURE_LABELS.get(dist_feature, dist_feature))
-    fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font={'family':'DM Sans, sans-serif','color':'#d8e5ef'}, title={'font':{'family':'Manrope, sans-serif','size':18,'color':'#f1f7fb'}}, margin={'l':24,'r':24,'t':58,'b':28}, legend={'bgcolor':'rgba(0,0,0,0)','font':{'color':'#c5d4e0'}})
-    fig.update_xaxes(gridcolor='rgba(160,190,210,.10)', zerolinecolor='rgba(160,190,210,.16)', linecolor='rgba(160,190,210,.15)')
-    fig.update_yaxes(gridcolor='rgba(160,190,210,.10)', zerolinecolor='rgba(160,190,210,.16)', linecolor='rgba(160,190,210,.15)')
-    st.plotly_chart(fig, use_container_width=True)
+elif view == 'Metrics Comparison':
+    render_objective2_page(DATA)
+# elif view == 'Dataset explorer':
+#     st.subheader('Catchment-level dataset')
+#     feature_options = [c for c in dataset.columns if c != 'catchment_id']
+#     selected_features = st.multiselect('Features to display', feature_options, default=feature_options[:5], format_func=lambda c: FEATURE_LABELS.get(c, c))
+#     filter_cluster = st.multiselect('Filter clusters', sorted(joined['cluster'].dropna().unique().astype(int).tolist()), default=sorted(joined['cluster'].dropna().unique().astype(int).tolist()))
+#     shown = joined[joined['cluster'].isin(filter_cluster)][['catchment_id', 'cluster'] + selected_features]
+#     st.dataframe(shown, use_container_width=True, hide_index=True)
+#     st.download_button('Download filtered catchments (CSV)', data=shown.to_csv(index=False).encode('utf-8'), file_name=f'catchment_clusters_k{k_choice}.csv', mime='text/csv')
+#     st.markdown('#### Feature distributions')
+#     dist_feature = st.selectbox('Distribution feature', feature_options, format_func=lambda c: FEATURE_LABELS.get(c, c))
+#     fig = px.histogram(joined, x=dist_feature, color='cluster_label', marginal='box', barmode='overlay', opacity=0.65, title=FEATURE_LABELS.get(dist_feature, dist_feature))
+#     fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font={'family':'DM Sans, sans-serif','color':'#d8e5ef'}, title={'font':{'family':'Manrope, sans-serif','size':18,'color':'#f1f7fb'}}, margin={'l':24,'r':24,'t':58,'b':28}, legend={'bgcolor':'rgba(0,0,0,0)','font':{'color':'#c5d4e0'}})
+#     fig.update_xaxes(gridcolor='rgba(160,190,210,.10)', zerolinecolor='rgba(160,190,210,.16)', linecolor='rgba(160,190,210,.15)')
+#     fig.update_yaxes(gridcolor='rgba(160,190,210,.10)', zerolinecolor='rgba(160,190,210,.16)', linecolor='rgba(160,190,210,.15)')
+#     st.plotly_chart(fig, use_container_width=True)
 
 st.divider()
