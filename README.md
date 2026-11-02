@@ -8,6 +8,8 @@
 **Study region:** Himachal Pradesh and Uttarakhand, India  
 **Rainfall period:** 2019–2024  
 **Current analysis table:** 113 catchments × 9 selected features
+Explore the deployed application here:
+👉 [Flash-Flood Pattern Clustering — Live Dashboard](https://flash-flood-risk-clustering.streamlit.app/)
 
 The **Flash-Flood Pattern Clustering** is an exploratory research and visualization project. It combines IMD daily gridded rainfall, terrain characteristics derived from SRTM elevation data, and HydroBASINS Level 8 catchment boundaries. Unsupervised-learning methods group catchments with similar rainfall–terrain profiles and support inspection of those patterns spatially.
 
@@ -162,7 +164,7 @@ Flash-Flood-Risk-Clustering/
 ├── streamlit_app.py
 ├── download.py
 ├── pipeline.py
-├── requirements-dashboard.txt
+├── requirements.txt
 ├── README.md
 ├── src/
 │   ├── create_final_catchments.py
@@ -184,7 +186,7 @@ Diagnostic scripts and exploratory notebooks (for example, catchment-size checks
 
 ## Installation and execution
 
-Use a Python environment compatible with the dependencies listed in the repository’s `requirements-dashboard.txt`. Geospatial libraries can have platform-specific installation requirements; use the project dependency file rather than installing packages ad hoc.
+Use a Python environment compatible with the dependencies listed in the repository’s `requirements.txt`. Geospatial libraries can have platform-specific installation requirements; use the project dependency file rather than installing packages ad hoc.
 
 ### Windows PowerShell
 
@@ -193,7 +195,7 @@ cd "C:\Users\mangi\Desktop\INT396 Project"
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
-python -m pip install -r requirements-dashboard.txt
+python -m pip install -r requirements.txt
 
 # Optional: acquire/extract inputs using the project's download script
 python download.py
