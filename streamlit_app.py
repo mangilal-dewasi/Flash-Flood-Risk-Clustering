@@ -8,6 +8,7 @@ import plotly.graph_objects as go
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from metrics_comparison import render_objective2_page
+from catchment_pattern_explorer import render_pattern_explorer
 
 st.markdown(
     """
@@ -185,8 +186,8 @@ with st.sidebar:
             'Cluster profiles',
             'PCA explorer',
             'Validation & methods',
-            'Metrics Comparison'
-         #   'Dataset explorer'
+            'Metrics Comparison',
+            "Catchment Pattern Explorer"
         ]
     )
 
@@ -328,20 +329,6 @@ elif view == 'Validation & methods':
     st.warning('Metrics from different distance definitions are not always directly comparable. Manhattan silhouette should use Manhattan distances; Euclidean Davies–Bouldin/Calinski–Harabasz values are supplementary diagnostics.')
 elif view == 'Metrics Comparison':
     render_objective2_page(DATA)
-# elif view == 'Dataset explorer':
-#     st.subheader('Catchment-level dataset')
-#     feature_options = [c for c in dataset.columns if c != 'catchment_id']
-#     selected_features = st.multiselect('Features to display', feature_options, default=feature_options[:5], format_func=lambda c: FEATURE_LABELS.get(c, c))
-#     filter_cluster = st.multiselect('Filter clusters', sorted(joined['cluster'].dropna().unique().astype(int).tolist()), default=sorted(joined['cluster'].dropna().unique().astype(int).tolist()))
-#     shown = joined[joined['cluster'].isin(filter_cluster)][['catchment_id', 'cluster'] + selected_features]
-#     st.dataframe(shown, use_container_width=True, hide_index=True)
-#     st.download_button('Download filtered catchments (CSV)', data=shown.to_csv(index=False).encode('utf-8'), file_name=f'catchment_clusters_k{k_choice}.csv', mime='text/csv')
-#     st.markdown('#### Feature distributions')
-#     dist_feature = st.selectbox('Distribution feature', feature_options, format_func=lambda c: FEATURE_LABELS.get(c, c))
-#     fig = px.histogram(joined, x=dist_feature, color='cluster_label', marginal='box', barmode='overlay', opacity=0.65, title=FEATURE_LABELS.get(dist_feature, dist_feature))
-#     fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font={'family':'DM Sans, sans-serif','color':'#d8e5ef'}, title={'font':{'family':'Manrope, sans-serif','size':18,'color':'#f1f7fb'}}, margin={'l':24,'r':24,'t':58,'b':28}, legend={'bgcolor':'rgba(0,0,0,0)','font':{'color':'#c5d4e0'}})
-#     fig.update_xaxes(gridcolor='rgba(160,190,210,.10)', zerolinecolor='rgba(160,190,210,.16)', linecolor='rgba(160,190,210,.15)')
-#     fig.update_yaxes(gridcolor='rgba(160,190,210,.10)', zerolinecolor='rgba(160,190,210,.16)', linecolor='rgba(160,190,210,.15)')
-#     st.plotly_chart(fig, use_container_width=True)
-
+elif view == "Catchment Pattern Explorer":
+    render_pattern_explorer(DATA)
 st.divider()

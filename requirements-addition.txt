@@ -1,0 +1,6 @@
+# Add this line to the requirements file used by the dashboard and deployment:
+lightgbm>=4.0
+
+# These are needed only if you plan to rebuild the daily panel from IMD NetCDF files:
+xarray>=2024.1
+scipy>=1.10

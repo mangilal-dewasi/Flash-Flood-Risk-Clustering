@@ -50,14 +50,13 @@ def render_objective2_page(data_dir):
         unsafe_allow_html=True,
     )
 
-    st.markdown("## Objective 2 · Clustering selection")
+    st.markdown("## Clustering Selection")
     st.caption(
         "Compare candidate cluster counts and distance definitions. "
         "PCA is a 2-D inspection view; clustering is performed in the full standardised feature space."
     )
     st.warning(
-        "Research boundary: clusters are exploratory rainfall–terrain patterns, "
-        "not validated flood-risk classes or flood-probability estimates."
+        "Research boundary: clusters are exploratory rainfall–terrain patterns"
     )
 
     evaluation = _read_csv(data_dir, "final_kmeans_evaluation.csv")
@@ -168,10 +167,3 @@ def render_objective2_page(data_dir):
                 f"PC1 + PC2 explain {pca.explained_variance_ratio_.sum()*100:.1f}% of total variance. "
                 "Visible overlap in 2-D does not prove overlap in the full feature space."
             )
-
-    st.markdown("### Defensible interpretation")
-    st.write(
-        "Select k by triangulating the elbow shape, Silhouette, Davies–Bouldin, minimum cluster size, "
-        "seed stability, and whether the resulting profiles are interpretable. Treat the selected k as "
-        "a working analytical configuration—not a uniquely correct natural classification."
-    )
