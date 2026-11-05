@@ -4,7 +4,7 @@ Run from the repository root after downloading the source datasets:
 
     python download.py
     python pipeline.py
-    streamlit run app.py
+    streamlit run streamlit_app.py
 
 The pipeline deliberately runs only the scripts required for the dashboard's
 final data products. Older/provisional analysis scripts are not run because

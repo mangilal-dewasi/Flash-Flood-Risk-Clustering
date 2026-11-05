@@ -74,7 +74,7 @@ def download_zip(item: dict) -> Path:
 
     url = f"https://drive.google.com/uc?id={item['id']}"
     print(f"Downloading {item['name']}…")
-    result = gdown.download(url=url, output=str(archive), quiet=False, fuzzy=True)
+    result = gdown.download(url=url, output=str(archive), quiet=False)
 
     if not result or not archive.is_file() or not zipfile.is_zipfile(archive):
         archive.unlink(missing_ok=True)
